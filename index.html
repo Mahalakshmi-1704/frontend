@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Price Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+        .model-metrics {
+            margin-top: 20px;
+            text-align: center;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crop Price Prediction</h1>
+    <form id="prediction-form">
+        <label for="state">State:</label>
+        <select id="state" name="state" required>
+            {% for state in states %}
+            <option value="{{ state }}">{{ state }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="crop">Crop:</label>
+        <select id="crop" name="crop" required>
+            {% for crop in crops %}
+            <option value="{{ crop }}">{{ crop }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="cost_cultivation">Cost of Cultivation (₹):</label>
+        <input type="number" id="cost_cultivation" name="cost_cultivation" step="0.01" required>
+
+        <label for="cost_cultivation2">Cost of Cultivation 2 (₹):</label>
+        <input type="number" id="cost_cultivation2" name="cost_cultivation2" step="0.01" required>
+
+        <label for="production">Production (Tonnes):</label>
+        <input type="number" id="production" name="production" step="0.01" required>
+
+        <label for="yield">Yield (Quintal/Hectare):</label>
+        <input type="number" id="yield" name="yield" step="0.01" required>
+
+        <label for="temperature">Temperature (°C):</label>
+        <input type="number" id="temperature" name="temperature" step="0.01" required>
+
+        <label for="rainfall_annual">RainFall Annual (mm):</label>
+        <input type="number" id="rainfall_annual" name="rainfall_annual" step="0.01" required>
+
+        <button type="submit">Predict Price</button>
+    </form>
+    <div id="result"></div>
+    <div class="model-metrics">
+        <p>Model Accuracy (R² Score): {{ "%.3f" % r2_score }}</p>
+    </div>
+
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<p>Error: ${data.error}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <p>Predicted Price: ₹${data.prediction}</p>
+                        <img src="${data.feature_importance_plot}" alt="Feature Importance">
+                        <img src="${data.actual_vs_predicted_plot}" alt="Actual vs Predicted">
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
